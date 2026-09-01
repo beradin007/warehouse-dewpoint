@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>창고 결로·환기 판단기</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;background:#f2f2f7;margin:0;color:#111}
+main{max-width:520px;margin:auto;padding:16px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0}
+h1{font-size:24px;margin:5px 0}.sub{color:#666;font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-size:13px;color:#666}
+input{width:100%;box-sizing:border-box;padding:12px;font-size:20px;border:1px solid #ccc;border-radius:10px;margin-top:5px}
+button{width:100%;padding:15px;border:0;border-radius:12px;background:#111;color:#fff;font-size:18px;font-weight:bold}
+#result{font-size:17px;line-height:1.65}.status{font-size:27px;font-weight:800;margin-bottom:8px}
+.small{font-size:13px;color:#666}
+</style></head>
+<body><main>
+<h1>창고 결로·환기 판단기</h1>
+<div class="sub">현장 센서의 온도와 습도를 입력하세요.</div>
+<div class="card"><b>창고 내부</b><div class="grid">
+<label>온도 ℃<input id="it" type="number" step="0.1" value="24.1"></label>
+<label>습도 %<input id="ih" type="number" step="0.1" value="95"></label></div></div>
+<div class="card"><b>외기</b><div class="grid">
+<label>온도 ℃<input id="ot" type="number" step="0.1" value="27.6"></label>
+<label>습도 %<input id="oh" type="number" step="0.1" value="82.9"></label></div></div>
+<div class="card"><button onclick="calc()">판단하기</button></div>
+<div class="card"><div id="result">현재 값을 기준으로 결과가 표시됩니다.</div></div>
+<div class="card small">※ 이슬점 차이와 절대습도를 이용한 현장 운전 참고용입니다. 실제 결로 여부는 천장 표면온도와 환기량에 따라 달라질 수 있습니다.</div>
+</main>
+<script>
+function dp(t,r){let a=17.62,b=243.12,g=Math.log(r/100)+a*t/(b+t);return b*g/(a-g)}
+function ah(t,r){let es=6.112*Math.exp(17.62*t/(243.12+t)),e=es*r/100;return 216.7*e/(t+273.15)}
+function calc(){
+ let it=+itEl.value,ih=+ihEl.value,ot=+otEl.value,oh=+ohEl.value;
+ if([it,ih,ot,oh].some(Number.isNaN)||ih<=0||ih>100||oh<=0||oh>100){result.innerHTML="입력값을 확인해주세요.";return}
+ let id=dp(it,ih),od=dp(ot,oh),ia=ah(it,ih),oa=ah(ot,oh),d=id-od;
+ let s,a;
+ if(d>=2){s="🟢 환풍기 ON 권장";a="문 OPEN + 대형 환풍기 ON + 선풍기 ON"}
+ else if(d>=1){s="🟡 환풍기 ON 가능";a="환기 가능. 결로 상태를 확인하며 운전"}
+ else if(d>=0){s="🟠 환기 효과 제한";a="외기와 실내 조건이 비슷하므로 조금 더 기다림"}
+ else{s="🔴 환풍기 OFF 권장";a="문 CLOSED + 대형 환풍기 OFF + 선풍기로 내부 순환"}
+ result.innerHTML='<div class="status">'+s+'</div>'+a+'<br><br>'+
+ '창고 이슬점: <b>'+id.toFixed(1)+'℃</b><br>'+
+ '외기 이슬점: <b>'+od.toFixed(1)+'℃</b><br>'+
+ '이슬점 차이: <b>'+d.toFixed(1)+'℃</b><br><br>'+
+ '창고 절대습도: <b>'+ia.toFixed(1)+' g/m³</b><br>'+
+ '외기 절대습도: <b>'+oa.toFixed(1)+' g/m³</b>';
+}
+const itEl=document.getElementById('it'),ihEl=document.getElementById('ih'),otEl=document.getElementById('ot'),ohEl=document.getElementById('oh'),result=document.getElementById('result');
+calc();
+</script></body></html>
